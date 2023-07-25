@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="depature_time">
+        <item>06:40 - 08:50</item>
+        <item>09:40 - 11:50</item>
+        <item>11:40 - 13:50</item>
+        <item>14:40 - 16:50</item>
+        <item>16:40 - 18:50</item>
+        <item>19:40 - 21:50</item>
+    </array>
+</resources>
