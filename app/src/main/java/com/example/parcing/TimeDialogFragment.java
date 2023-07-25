@@ -1,9 +1,6 @@
 package com.example.parcing;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +12,6 @@ import android.widget.ListView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.fragment.app.ListFragment;
-
-import java.sql.Time;
 
 public class TimeDialogFragment extends DialogFragment {
 
@@ -46,8 +39,6 @@ public class TimeDialogFragment extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
         timeList = getView().findViewById(R.id.listTime);
         timeArray = getResources().getStringArray(R.array.depature_time);
         adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, timeArray);
@@ -56,8 +47,6 @@ public class TimeDialogFragment extends DialogFragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long id) {
                 timeListItem.setChosedTime(timeArray[pos]);
-                editor.putString(String.valueOf(R.string.time), timeArray[pos]);
-                editor.apply();
                 dismiss();
                 editText1.setText(timeArray[pos]);
             }
