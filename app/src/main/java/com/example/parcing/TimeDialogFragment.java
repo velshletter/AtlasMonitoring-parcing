@@ -19,9 +19,10 @@ public class TimeDialogFragment extends DialogFragment {
     TimeListItem timeListItem;
     EditText editText1;
 
-    public String[] timeArray = new String[10];
+    public String[] timeArray;
     private ArrayAdapter<String> adapter;
 
+    public void setTimeArray(String[] timeArray){ this.timeArray = timeArray; }
     public void setListItem(TimeListItem item){
         timeListItem = item;
     }
@@ -40,13 +41,16 @@ public class TimeDialogFragment extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         timeList = getView().findViewById(R.id.listTime);
+        ////////////////////////////////////
         timeArray = getResources().getStringArray(R.array.depature_time);
+        ////////////////////////////////////
         adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, timeArray);
+
         timeList.setAdapter(adapter);
         timeList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long id) {
-                timeListItem.setChosedTime(timeArray[pos]);
+                //timeListItem.setChosedTime(timeArray[pos]);
                 dismiss();
                 editText1.setText(timeArray[pos]);
             }
