@@ -1,11 +1,10 @@
 package com.example.parcing;
 
-import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,7 +28,6 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 
 public class ChoseTimeAndStartActivity extends AppCompatActivity {
@@ -45,11 +43,13 @@ public class ChoseTimeAndStartActivity extends AppCompatActivity {
     private Handler handler;
 
     private Document doc;
-    private Thread thread2, thread3;
-    private Runnable runnable1, runnable2;
+    private Thread thread2;
+    private Runnable runnable1;
     private final String urlFstP = "https://atlasbus.by/Маршруты/",
             urlSecP = "?date=2023-";
-    private Elements stTime, sits, time, info;
+    private Elements sits, info;
+
+    private Intent serviceIntent;
 
 
     @Override
@@ -65,7 +65,6 @@ public class ChoseTimeAndStartActivity extends AppCompatActivity {
         from = timeListItem.getFrom();
         to = timeListItem.getTo();
         date = timeListItem.getDate();
-        //parcTimeDepForList();
 
         setContentView(R.layout.activity_chose_time_and_start_find);
 
@@ -76,7 +75,8 @@ public class ChoseTimeAndStartActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(ChoseTimeAndStartActivity.this);
-                //builder.setCancelable(false);
+                builder.setCancelable(false);
+                builder.setTitle("Выберите время отправления");
                 builder.setMultiChoiceItems(timeArray, selectedTime , new DialogInterface.OnMultiChoiceClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i, boolean b) {
@@ -88,18 +88,18 @@ public class ChoseTimeAndStartActivity extends AppCompatActivity {
                         }
                     }
                 });
-                builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
                     @SuppressLint("SetTextI18n")
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        String ans = "";
+                        StringBuilder ans = new StringBuilder();
                         for (int j = 0; j < timeList.size(); j++) {
-                            ans= ans + timeArray[timeList.get(j)] + " ";
+                            ans.append(timeArray[timeList.get(j)]).append(" ");
                         }
-                        editText.setText(ans);
+                        editText.setText(ans.toString());
                     }
                 });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
@@ -112,60 +112,54 @@ public class ChoseTimeAndStartActivity extends AppCompatActivity {
         findButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //createNotificationChannel();
-                //startService(new Intent(getApplicationContext(), YourService.class));
-                //init();
+                createNotificationChannel();
+                serviceIntent = new Intent(getApplicationContext(), YourService.class);
+                startService(serviceIntent);
+                init();
             }
         });
     }
-
-
-/*
     public void init() {
         handler = new Handler();
         runnable1 = () -> getWeb();
         thread2 = new Thread(runnable1);
         thread2.start();
     }
-
     private void getWeb() {
         try {
             String url = urlFstP + from + "/" + to + urlSecP + date;
-            Document doc = Jsoup.connect(url).get();
+            doc = Jsoup.connect(url).get();
             //doc = Jsoup.connect(urlFstP + "Ивье/Минск" + urlSecP + "07-26").get();
-
             info = doc.select("div.MuiGrid-grid-md-auto.MuiGrid-item.MuiGrid-root:nth-of-type(3)");
-            time = doc.select("div.MuiGrid-grid-md-3.MuiGrid-item.MuiGrid-root:nth-of-type(1)");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int i = 0, j = 1; i < info.size(); i++, j += 2) {
-                        stTime = time.get(j).getAllElements();
-                        if (timeListItem.getChosedTime().substring(0, 5).equals(stTime.get(3).text())) {
-                            sits = info.get(i).getAllElements();
-                            break;
+                    for (int i = 0; i < timeList.size(); i++) {
+                        sits = info.get(timeList.get(i)).getAllElements();
+                        if (sits.size() > 1) {
+                           sendNot(timeArray[timeList.get(i)]);
+                           stopService(serviceIntent);
+                           return;
                         }
                     }
-                    if (sits.size() > 1) {
-                        sendNot();
-                        Log.d("MyLog", "123123123");
-                        //textView.setText(sits.get(sits.size() - 1).text());
-                    } //textView.setText("");
                 }
             });
-
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            handler.postDelayed(runnable1, 5000);
+            handler.postDelayed(runnable1, 60_000);
         }
     }
 
-    private void sendNot() {
+    private void sendNot(String foundedTime) {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                notificationIntent, PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "not_channel")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("Найдено место на время " + timeListItem.getChosedTime());
+                .setSmallIcon(R.drawable.search__1_)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Найдено место на время " + foundedTime)
+                .setContentIntent(pendingIntent);
 
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
         createNotificationChannel();
@@ -187,5 +181,5 @@ public class ChoseTimeAndStartActivity extends AppCompatActivity {
 
     }
 
- */
+ 
 }

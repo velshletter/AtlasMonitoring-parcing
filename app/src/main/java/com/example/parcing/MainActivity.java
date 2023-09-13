@@ -1,56 +1,45 @@
 package com.example.parcing;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.StrictMode;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView textView;
-    public EditText editTime, editFrom, editTo, editDate;
-    private Button buttonNext;
+    public EditText editFrom;
+    public EditText editTo;
+    public EditText editDate;
 
-    public TimeDialogFragment timeDialogFragment;
     private TimeListItem timeListItem;
-    private Handler handler;
 
     private Document doc;
-    private Thread thread2, thread3;
-    private Runnable runnable1, runnable2;
     private final String urlFstP = "https://atlasbus.by/Маршруты/",
             urlSecP = "?date=2023-";
-    private Elements stTime, sits, time, info;
+    private Elements stTime;
+    private Elements time;
+    private Elements info;
 
 
-    private ArrayList<String> timeArray = new ArrayList<>();
-    //public final String[] timeArray = new String[20];
+    private final ArrayList<String> timeArray = new ArrayList<>();
     private String from, to, date;
     private int g=0;
+
+    public MainActivity() {
+    }
 
 
     @Override
@@ -60,74 +49,75 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         //parcTimeDepForList();
-        textView = findViewById(R.id.textView1);
         editFrom = findViewById(R.id.editFrom);
         editTo = findViewById(R.id.editTo);
         editDate = findViewById(R.id.editTextDate);
-        buttonNext = this.<Button>findViewById(R.id.next_button);
+        Button buttonNext = this.findViewById(R.id.next_button);
+        Button buttonStop = this.findViewById(R.id.close_button);
 
+        buttonNext.setOnClickListener(view -> {
+            from = String.valueOf(editFrom.getText());
+            to = String.valueOf(editTo.getText());
+            date = String.valueOf(editDate.getText());
+            timeListItem = new TimeListItem(from, to, date);
+                parcTimeDepForList();
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if(g!=0){
+                        Intent intent = new Intent(getApplicationContext(), ChoseTimeAndStartActivity.class);
+                        intent.putExtra(TimeListItem.class.getSimpleName(), timeListItem);
+                        intent.putExtra("timeArray", timeArray);
+                        intent.putExtra("length", g);
+                        startActivity(intent);
+                        cancel();
+                        finish();
+                    }
 
-        buttonNext.setOnClickListener(new View.OnClickListener() {
+                }
+            }, 0 , 800);
+
+            //createNotificationChannel();
+            //startService(new Intent(getApplicationContext(), YourService.class));
+            //init();
+        });
+
+        buttonStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                from = String.valueOf(editFrom.getText());
-                to = String.valueOf(editTo.getText());
-                date = String.valueOf(editDate.getText());
-                timeListItem = new TimeListItem(from, to, date);
-                    parcTimeDepForList();
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        if(g!=0){
-                            Intent intent = new Intent(getApplicationContext(), ChoseTimeAndStartActivity.class);
-                            intent.putExtra(TimeListItem.class.getSimpleName(), timeListItem);
-                            intent.putExtra("timeArray", timeArray);
-                            intent.putExtra("length", g);
-                            startActivity(intent);
-                            cancel();
-                        }
-
-                    }
-                }, 0 , 2000);
-
-                //createNotificationChannel();
-                //startService(new Intent(getApplicationContext(), YourService.class));
-                //init();
+                finish();
+                Intent serviceIntent = new Intent(getApplicationContext(), YourService.class);
+                stopService(serviceIntent);
             }
         });
 
     }
     public void parcTimeDepForList(){
-        runnable2 = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String url = urlFstP + from + "/" + to + urlSecP + date;
-                    doc = Jsoup.connect(url).get();
-                    //doc = Jsoup.connect(urlFstP + "Ивье/Минск" + urlSecP + "07-28").get();
-                    time = doc.select("div.MuiGrid-grid-md-3.MuiGrid-item.MuiGrid-root:nth-of-type(1)");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            info = doc.select("div.MuiGrid-grid-md-auto.MuiGrid-item.MuiGrid-root:nth-of-type(3)");
-                            for (int i = 0, j = 1; i < info.size(); i++, j += 2) {
-                                stTime = time.get(j).getAllElements();
-                                timeArray.add(stTime.get(3).text());
-                                g++;
-                            }
-                        }
-                    });
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
+        Runnable runnable2 = () -> {
+            try {
+                String url = urlFstP + from + "/" + to + urlSecP + date;
+                doc = Jsoup.connect(url).get();
+                //doc = Jsoup.connect(urlFstP + "Ивье/Минск" + urlSecP + "07-28").get();
+                time = doc.select("div.MuiGrid-grid-md-3.MuiGrid-item.MuiGrid-root:nth-of-type(1)");
+                runOnUiThread(() -> {
+                    info = doc.select("div.MuiGrid-grid-md-auto.MuiGrid-item.MuiGrid-root:nth-of-type(3)");
+                    for (int i = 0, j = 1; i < info.size(); i++, j += 2) {
+                        stTime = time.get(j).getAllElements();
+                        timeArray.add(stTime.get(3).text());
+                        g++;
+                    }
+                });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+
         };
-        thread2 = new Thread(runnable2);
+        Thread thread2 = new Thread(runnable2);
         thread2.start();
     }
-/*
+
+    /*
     public void init() {
         //handler = new Handler();
         runnable1 = () -> getWeb();

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">parcing</string>
-    <string name="from">From</string>
-    <string name="to">To</string>
-    <string name="time"></string>
+    <string name="app_name">Поиск Atlas</string>
+    <string name="from">Откуда</string>
+    <string name="to">Куда</string>
+    <string name="end">Завершить</string>
 </resources>
